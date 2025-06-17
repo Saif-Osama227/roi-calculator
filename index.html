@@ -11,6 +11,7 @@
     table { width: 100%; margin-top: 20px; border-collapse: collapse; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background-color: #eee; }
+    .conditional { display: none; }
   </style>
 </head>
 <body>
@@ -28,6 +29,12 @@
   <label for="salary">Monthly Salary (AED):</label>
   <input type="number" id="salary" value="15000" />
 
+  <label for="ownership">Car Ownership:</label>
+  <select id="ownership">
+    <option value="retail" selected>Retail</option>
+    <option value="managed">Managed</option>
+  </select>
+
   <label for="nationality">Nationality:</label>
   <select id="nationality">
     <option value="local">UAE National</option>
@@ -37,8 +44,22 @@
   <label for="bank">Select Bank:</label>
   <select id="bank">
     <option value="ENBD">Emirates NBD</option>
-    <!-- More banks to be added later -->
+    <option value="DIB">Dubai Islamic Bank</option>
   </select>
+
+  <div id="dibOptions" class="conditional">
+    <label for="gv">Are you a Golden Visa holder?</label>
+    <select id="gv">
+      <option value="no" selected>No</option>
+      <option value="yes">Yes</option>
+    </select>
+
+    <label for="bankingCustomer">Are you a DIB Banking Customer?</label>
+    <select id="bankingCustomer">
+      <option value="no" selected>No</option>
+      <option value="yes">Yes</option>
+    </select>
+  </div>
 
   <div id="result"></div>
 
@@ -55,18 +76,47 @@
       return 5.0;
     }
 
-    function calculate() {
+    function getDIBRate(salary, nationality, ownership, goldenVisa, banking) {
+      let slabs;
+      const s = salary;
+      const gv = goldenVisa === 'yes';
+      const bank = banking === 'yes';
+
+      if ((nationality === 'local' || gv) && ownership === 'retail') {
+        slabs = [[4999, 5.25], [9999, 3.50], [14999, 3.25], [24999, 2.60], [34999, 2.50], [Infinity, 2.35]];
+      } else if (nationality === 'expat' && ownership === 'retail') {
+        slabs = bank
+          ? [[4999, 6.00], [9999, 5.00], [14999, 4.50], [24999, 4.00], [34999, 3.25], [Infinity, 3.25]]
+          : [[4999, 6.00], [9999, 5.00], [14999, 4.50], [24999, 4.15], [34999, 3.50], [Infinity, 3.25]];
+      } else if ((nationality === 'local' || gv) && ownership === 'managed') {
+        slabs = [[4999, 5.40], [9999, 3.65], [14999, 3.40], [24999, 2.75], [34999, 2.65], [Infinity, 2.50]];
+      } else {
+        slabs = bank
+          ? [[4999, 6.15], [9999, 5.15], [14999, 4.65], [24999, 4.15], [34999, 3.40], [Infinity, 3.40]]
+          : [[4999, 6.15], [9999, 5.15], [14999, 4.65], [24999, 4.30], [34999, 3.65], [Infinity, 3.40]];
+      }
+
+      for (const [limit, rate] of slabs) {
+        if (s <= limit) return rate;
+      }
+      return 5.0;
+    }
+
+    function calculate(event) {
       const price = parseFloat(document.getElementById('price').value);
       const dpPercentField = document.getElementById('dpPercent');
       const dpAmountField = document.getElementById('dpAmount');
       const salary = parseFloat(document.getElementById('salary').value);
       const bank = document.getElementById('bank').value;
       const nationality = document.getElementById('nationality').value;
+      const ownership = document.getElementById('ownership').value;
+      const goldenVisa = document.getElementById('gv')?.value || 'no';
+      const banking = document.getElementById('bankingCustomer')?.value || 'no';
 
       let dpAmount = parseFloat(dpAmountField.value);
       let dpPercent = parseFloat(dpPercentField.value);
 
-      const source = event.target.id;
+      const source = event?.target?.id;
       if (source === 'dpPercent' || source === 'price') {
         dpAmount = (dpPercent / 100) * price;
         dpAmountField.value = dpAmount.toFixed(2);
@@ -80,6 +130,8 @@
 
       if (bank === 'ENBD') {
         roi = getENBDRate(salary, nationality);
+      } else if (bank === 'DIB') {
+        roi = getDIBRate(salary, nationality, ownership, goldenVisa, banking);
       }
 
       let table = `<p>ROI (Flat): <strong>${roi.toFixed(2)}%</strong></p>`;
@@ -98,8 +150,21 @@
       document.getElementById('result').innerHTML = table;
     }
 
+    function toggleConditionalFields() {
+      const isDIB = document.getElementById('bank').value === 'DIB';
+      document.getElementById('dibOptions').style.display = isDIB ? 'block' : 'none';
+    }
+
     document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calculate));
-    window.onload = calculate;
+    document.getElementById('bank').addEventListener('change', () => {
+      toggleConditionalFields();
+      calculate();
+    });
+    document.getElementById('ownership').addEventListener('change', calculate);
+    window.onload = () => {
+      toggleConditionalFields();
+      calculate();
+    };
   </script>
 </body>
 </html>
