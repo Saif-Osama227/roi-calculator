@@ -28,34 +28,61 @@
   <label for="salary">Monthly Salary (AED):</label>
   <input type="number" id="salary" value="15000" />
 
+  <label for="nationality">Nationality:</label>
+  <select id="nationality">
+    <option value="local">UAE National</option>
+    <option value="expat" selected>Expat</option>
+  </select>
+
   <label for="bank">Select Bank:</label>
   <select id="bank">
-    <option value="ENBD">ENBD</option>
-    <option value="DIB">DIB</option>
-    <option value="ADCB">ADCB</option>
+    <option value="ENBD">Emirates NBD</option>
+    <!-- More banks to be added later -->
   </select>
 
   <div id="result"></div>
 
   <script>
-    const roiMatrix = {
-      ENBD: salary => (salary < 10000 ? 4.5 : 5.0),
-      DIB: salary => (salary < 10000 ? 2.99 : 3.19),
-      ADCB: salary => (salary < 15000 ? 3.5 : 3.99),
-    };
-
     const tenureMonths = [12, 24, 36, 48, 60];
+
+    function getENBDRate(salary, nationality) {
+      if (nationality === 'local') return 2.89;
+      if (salary >= 50000) return 3.09;
+      if (salary >= 30000) return 3.39;
+      if (salary >= 15000) return 3.59;
+      if (salary >= 10000) return 3.89;
+      if (salary >= 6000) return 4.09;
+      return 5.0; // fallback rate
+    }
 
     function calculate() {
       const price = parseFloat(document.getElementById('price').value);
-      const dpPercent = parseFloat(document.getElementById('dpPercent').value);
-      const dpAmountInput = parseFloat(document.getElementById('dpAmount').value);
+      const dpPercentField = document.getElementById('dpPercent');
+      const dpAmountField = document.getElementById('dpAmount');
       const salary = parseFloat(document.getElementById('salary').value);
       const bank = document.getElementById('bank').value;
+      const nationality = document.getElementById('nationality').value;
 
-      const dpAmount = dpAmountInput || (dpPercent / 100) * price;
+      let dpAmount = parseFloat(dpAmountField.value);
+      let dpPercent = parseFloat(dpPercentField.value);
+
+      // Sync percentage to amount and vice versa
+      const source = event.target.id;
+      if (source === 'dpPercent' || source === 'price') {
+        dpAmount = (dpPercent / 100) * price;
+        dpAmountField.value = dpAmount.toFixed(2);
+      } else if (source === 'dpAmount') {
+        dpPercent = (dpAmount / price) * 100;
+        dpPercentField.value = dpPercent.toFixed(2);
+      }
+
       const financeAmount = price - dpAmount;
-      const roi = roiMatrix[bank](salary);
+      let roi = 5.0;
+
+      if (bank === 'ENBD') {
+        roi = getENBDRate(salary, nationality);
+      }
+
       const monthlyROI = roi / 100 / 12;
 
       let table = `<p>ROI: <strong>${roi.toFixed(2)}%</strong></p>`;
