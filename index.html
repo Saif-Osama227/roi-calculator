@@ -55,7 +55,7 @@
 <label for="carPrice">Car Price (AED)</label>
 <input type="number" id="carPrice" placeholder="e.g. 100000" oninput="syncDownPayment()"/>
 
-<label for="downPaymentPercent">Down Payment (%)</label>
+<label for="downPaymentPercent">Down Payment Percentage (%)</label>
 <input type="number" id="downPaymentPercent" placeholder="e.g. 20" oninput="updateDownPaymentFromPercent()"/>
 
 <label for="downPaymentAmount">Down Payment Amount (AED)</label>
@@ -65,12 +65,12 @@
 <input type="number" id="salary" placeholder="e.g. 12000" />
 
 <label for="nationality">Nationality</label>
-<select id="nationality">
+<select id="nationality" onchange="handleBankOptions()">
   <option value="expat">Expat</option>
   <option value="local">UAE National</option>
 </select>
 
-<label for="bank">Bank</label>
+<label for="bank">Financing Bank</label>
 <select id="bank" onchange="handleBankOptions()">
   <option value="ENBD">Emirates NBD</option>
   <option value="DIB">Dubai Islamic Bank</option>
@@ -101,184 +101,86 @@
   <option value="managed">Managed (Owned by individual)</option>
 </select>
 
-<label for="loanYears">Loan Tenure (Years)</label>
-<input type="number" id="loanYears" placeholder="e.g. 5" min="1" max="5" />
-
 <table id="resultsTable">
   <thead>
     <tr>
-      <th>ROI</th>
-      <th>Monthly EMI</th>
-      <th>Total Interest</th>
       <th>Tenure</th>
+      <th>ROI</th>
+      <th>Monthly Installment</th>
+      <th>Total Interest</th>
     </tr>
   </thead>
-  <tbody>
-    <tr>
-      <td id="roiCell">--</td>
-      <td id="emiCell">--</td>
-      <td id="interestCell">--</td>
-      <td id="tenureCell">--</td>
-    </tr>
+  <tbody id="resultsBody">
+    <tr><td>1 year</td><td>--</td><td>--</td><td>--</td></tr>
+    <tr><td>2 years</td><td>--</td><td>--</td><td>--</td></tr>
+    <tr><td>3 years</td><td>--</td><td>--</td><td>--</td></tr>
+    <tr><td>4 years</td><td>--</td><td>--</td><td>--</td></tr>
+    <tr><td>5 years</td><td>--</td><td>--</td><td>--</td></tr>
   </tbody>
 </table>
 
 <script>
-  const carPrice = document.getElementById('carPrice');
-  const downPaymentPercent = document.getElementById('downPaymentPercent');
-  const downPaymentAmount = document.getElementById('downPaymentAmount');
-  const loanYears = document.getElementById('loanYears');
-  const salary = document.getElementById('salary');
-  const nationality = document.getElementById('nationality');
-  const bank = document.getElementById('bank');
-  const ownership = document.getElementById('ownership');
-  const goldenVisaContainer = document.getElementById('goldenVisaContainer');
-  const goldenVisa = document.getElementById('goldenVisa');
-  const bankingCustomerContainer = document.getElementById('bankingCustomerContainer');
-  const bankingCustomer = document.getElementById('bankingCustomer');
+function syncDownPayment() {
+  updateDownPaymentFromPercent();
+}
 
-  const roiCell = document.getElementById('roiCell');
-  const emiCell = document.getElementById('emiCell');
-  const interestCell = document.getElementById('interestCell');
-  const tenureCell = document.getElementById('tenureCell');
-
-  function updateResults(rate, emi, interest, tenure) {
-    roiCell.innerText = rate ? `${rate.toFixed(2)}%` : '--';
-    emiCell.innerText = emi ? `AED ${emi.toFixed(2)}` : '--';
-    interestCell.innerText = interest ? `AED ${interest.toFixed(2)}` : '--';
-    tenureCell.innerText = tenure ? `${tenure} year(s)` : '--';
+function updateDownPaymentFromPercent() {
+  const price = parseFloat(carPrice.value);
+  const percent = parseFloat(downPaymentPercent.value);
+  if (price && percent >= 0) {
+    downPaymentAmount.value = ((percent / 100) * price).toFixed(2);
   }
+  calculateEMIs();
+}
 
-  function syncDownPayment() {
-    updateDownPaymentFromPercent();
+function updatePercentFromDownPayment() {
+  const price = parseFloat(carPrice.value);
+  const amount = parseFloat(downPaymentAmount.value);
+  if (price && amount >= 0) {
+    downPaymentPercent.value = ((amount / price) * 100).toFixed(2);
   }
+  calculateEMIs();
+}
 
-  function updateDownPaymentFromPercent() {
-    const price = parseFloat(carPrice.value);
-    const percent = parseFloat(downPaymentPercent.value);
-    if (price && percent >= 0) {
-      downPaymentAmount.value = ((percent / 100) * price).toFixed(2);
+function handleBankOptions() {
+  const selectedBank = bank.value;
+  const isExpat = nationality.value === 'expat';
+  goldenVisaContainer.style.display = (selectedBank === 'DIB' && isExpat) ? 'block' : 'none';
+  bankingCustomerContainer.style.display = (selectedBank === 'DIB') ? 'block' : 'none';
+  calculateEMIs();
+}
+
+function getRate() {
+  // Placeholder until detailed logic is added.
+  return 3.5;
+}
+
+function calculateEMIs() {
+  const price = parseFloat(carPrice.value);
+  const down = parseFloat(downPaymentAmount.value);
+  const rate = getRate();
+  const body = document.getElementById("resultsBody");
+
+  body.innerHTML = "";
+
+  for (let years = 1; years <= 5; years++) {
+    if (!price || !down || !rate) {
+      body.innerHTML += `<tr><td>${years} year${years > 1 ? 's' : ''}</td><td>--</td><td>--</td><td>--</td></tr>`;
+      continue;
     }
-    calculateEMI();
-  }
-
-  function updatePercentFromDownPayment() {
-    const price = parseFloat(carPrice.value);
-    const amount = parseFloat(downPaymentAmount.value);
-    if (price && amount >= 0) {
-      downPaymentPercent.value = ((amount / price) * 100).toFixed(2);
-    }
-    calculateEMI();
-  }
-
-  function handleBankOptions() {
-    const selectedBank = bank.value;
-    goldenVisaContainer.style.display = (selectedBank === 'DIB' && nationality.value === 'expat') ? 'block' : 'none';
-    bankingCustomerContainer.style.display = (selectedBank === 'DIB') ? 'block' : 'none';
-    calculateEMI();
-  }
-
-  function getRate() {
-    const sal = parseFloat(salary.value);
-    const nat = nationality.value;
-    const selectedBank = bank.value;
-    const isRetail = ownership.value === 'retail';
-    const isGoldenVisa = goldenVisa.value === 'yes';
-    const isBanking = bankingCustomer.value === 'yes';
-    const price = parseFloat(carPrice.value);
-
-    if (selectedBank === 'ENBD') {
-      if (nat === 'local') return 2.89;
-      if (sal < 10000) return 4.09;
-      if (sal < 15000) return 3.89;
-      if (sal < 30000) return 3.59;
-      if (sal < 50000) return 3.39;
-      return 3.09;
-    }
-
-    if (selectedBank === 'DIB') {
-      const isLocalOrGV = nat === 'local' || isGoldenVisa;
-      const isManaged = ownership.value === 'managed';
-
-      function slab(s) {
-        return s < 5000 ? 0 :
-               s < 10000 ? 1 :
-               s < 15000 ? 2 :
-               s < 25000 ? 3 :
-               s < 35000 ? 4 : 5;
-      }
-
-      const slabs = {
-        nationals_retail: [5.25, 3.5, 3.25, 2.6, 2.5, 2.35],
-        nationals_managed: [5.4, 3.65, 3.4, 2.75, 2.65, 2.5],
-        expats_banking_retail: [6, 5, 4.5, 4.0, 3.25, 3.25],
-        expats_nonbanking_retail: [6, 5, 4.5, 4.15, 3.5, 3.25],
-        expats_banking_managed: [6.15, 5.15, 4.65, 4.15, 3.4, 3.4],
-        expats_nonbanking_managed: [6.15, 5.15, 4.65, 4.3, 3.65, 3.4],
-      };
-
-      const key = isLocalOrGV
-        ? (isManaged ? 'nationals_managed' : 'nationals_retail')
-        : (isManaged
-          ? (isBanking ? 'expats_banking_managed' : 'expats_nonbanking_managed')
-          : (isBanking ? 'expats_banking_retail' : 'expats_nonbanking_retail'));
-
-      return slabs[key][slab(sal)];
-    }
-
-    if (selectedBank === 'SIB') {
-      const isBanking = bankingCustomer.value === 'yes';
-      if (nat === 'local') return sal >= 50000 ? 2.99 :
-        sal >= 35000 ? 3.09 :
-        sal >= 20000 ? 3.19 :
-        sal >= 10000 ? 3.29 :
-        sal >= 5000 ? 3.39 : null;
-      else return sal >= 50000 ? 3.29 :
-        sal >= 35000 ? 3.39 :
-        sal >= 20000 ? 3.49 :
-        sal >= 10000 ? 3.59 :
-        sal >= 5000 ? 3.69 : null;
-    }
-
-    if (selectedBank === 'EIB') {
-      if (nat === 'local' && sal >= 4000) return price >= 150000 ? 2.89 : 2.99;
-      else return sal >= 10000 ? 3.19 : 3.49;
-    }
-
-    if (selectedBank === 'ADCB') {
-      if (nat === 'local') return sal >= 40000 ? 2.99 :
-        sal >= 20000 ? 2.99 :
-        sal >= 12000 ? 3.1 :
-        sal >= 8000 ? 3.84 :
-        sal >= 5000 ? 4.35 : null;
-      else return sal >= 40000 ? 3.2 :
-        sal >= 20000 ? 3.25 :
-        sal >= 8000 ? 3.85 :
-        sal >= 5000 ? 4.35 : null;
-    }
-
-    return null;
-  }
-
-  function calculateEMI() {
-    const price = parseFloat(carPrice.value);
-    const down = parseFloat(downPaymentAmount.value);
-    const years = parseInt(loanYears.value);
-    const rate = getRate();
-    if (!price || !down || !years || !rate) return updateResults();
     const financeAmount = price - down;
     const totalInterest = financeAmount * (rate / 100) * years;
     const totalPayable = financeAmount + totalInterest;
     const emi = totalPayable / (years * 12);
-    updateResults(rate, emi, totalInterest, years);
+    body.innerHTML += `<tr><td>${years} year${years > 1 ? 's' : ''}</td><td>${rate.toFixed(2)}%</td><td>AED ${emi.toFixed(2)}</td><td>AED ${totalInterest.toFixed(2)}</td></tr>`;
   }
+}
 
-  // Attach change listeners
-  document.querySelectorAll('input, select').forEach(el =>
-    el.addEventListener('input', calculateEMI)
-  );
+document.querySelectorAll('input, select').forEach(el =>
+  el.addEventListener('input', calculateEMIs)
+);
 
-  updateResults(); // Initial placeholder
+calculateEMIs();
 </script>
 
 </body>
