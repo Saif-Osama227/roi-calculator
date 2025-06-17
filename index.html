@@ -6,17 +6,38 @@
   <title>Car Loan ROI Calculator</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 700px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 40px 20px;
+      max-width: 800px;
       margin: auto;
+      background: #f9f9f9;
+      color: #333;
     }
-    label, select, input {
-      display: block;
-      margin-top: 10px;
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #005baa;
+    }
+    label {
+      margin-top: 15px;
+      font-weight: 600;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
     }
     .hidden {
       display: none;
+    }
+    #roi, #emi, #totalInterest, #tenure {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -34,17 +55,17 @@
 
   <label for="nationality">Nationality:</label>
   <select id="nationality">
-    <option value="local">Local</option>
     <option value="expat">Expat</option>
+    <option value="local">UAE National</option>
   </select>
 
   <label for="salary">Monthly Salary (AED):</label>
-  <input type="number" id="salary" />
+  <input type="number" id="salary" placeholder="e.g. 15000" />
 
   <label for="carOwner">Car Ownership:</label>
   <select id="carOwner">
-    <option value="retail">Retail (Company-owned)</option>
-    <option value="managed">Managed (Individual-owned)</option>
+    <option value="retail">Retail (Owned by Dubizzle)</option>
+    <option value="managed">Managed (Owned by individual)</option>
   </select>
 
   <div id="goldenVisaGroup" class="hidden">
@@ -56,7 +77,7 @@
   </div>
 
   <div id="bankingGroup" class="hidden">
-    <label for="bankingCustomer">Banking Customer?</label>
+    <label for="bankingCustomer">Banking with DIB?</label>
     <select id="bankingCustomer">
       <option value="no">No</option>
       <option value="yes">Yes</option>
@@ -64,19 +85,21 @@
   </div>
 
   <label for="carPrice">Car Price (AED):</label>
-  <input type="number" id="carPrice" />
+  <input type="number" id="carPrice" placeholder="e.g. 85000" />
 
   <label for="downPaymentPercent">Down Payment (%):</label>
-  <input type="number" id="downPaymentPercent" />
+  <input type="number" id="downPaymentPercent" placeholder="e.g. 20" />
 
   <label for="downPaymentAmount">Down Payment Amount (AED):</label>
-  <input type="number" id="downPaymentAmount" />
+  <input type="number" id="downPaymentAmount" placeholder="e.g. 17000" />
 
   <label for="loanYears">Loan Period (Years):</label>
-  <input type="number" id="loanYears" value="5" />
+  <input type="number" id="loanYears" value="5" placeholder="e.g. 5" min="1" max="5" />
 
   <p id="roi">ROI: </p>
   <p id="emi">Monthly EMI: </p>
+  <p id="totalInterest">Total Interest: </p>
+  <p id="tenure">Tenure: </p>
 
   <script>
     const bank = document.getElementById('bank');
@@ -89,6 +112,8 @@
     const loanYears = document.getElementById('loanYears');
     const roiDisplay = document.getElementById('roi');
     const emiDisplay = document.getElementById('emi');
+    const totalInterestDisplay = document.getElementById('totalInterest');
+    const tenureDisplay = document.getElementById('tenure');
     const goldenVisaGroup = document.getElementById('goldenVisaGroup');
     const goldenVisa = document.getElementById('goldenVisa');
     const bankingGroup = document.getElementById('bankingGroup');
@@ -171,6 +196,8 @@
 
       roiDisplay.innerText = `ROI: ${rate.toFixed(2)}%`;
       emiDisplay.innerText = `Monthly EMI: AED ${emi.toFixed(2)}`;
+      totalInterestDisplay.innerText = `Total Interest: AED ${totalInterest.toFixed(2)}`;
+      tenureDisplay.innerText = `Tenure: ${years} year(s)`;
     }
 
     carPrice.addEventListener('input', updateDownPayments);
