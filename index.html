@@ -14,7 +14,7 @@
   </style>
 </head>
 <body>
-  <h2>Finance Calculator</h2>
+  <h2>Finance Calculator (Flat Interest)</h2>
 
   <label for="price">Total Price (AED):</label>
   <input type="number" id="price" value="122500" />
@@ -52,7 +52,7 @@
       if (salary >= 15000) return 3.59;
       if (salary >= 10000) return 3.89;
       if (salary >= 6000) return 4.09;
-      return 5.0; // fallback rate
+      return 5.0;
     }
 
     function calculate() {
@@ -66,7 +66,6 @@
       let dpAmount = parseFloat(dpAmountField.value);
       let dpPercent = parseFloat(dpPercentField.value);
 
-      // Sync percentage to amount and vice versa
       const source = event.target.id;
       if (source === 'dpPercent' || source === 'price') {
         dpAmount = (dpPercent / 100) * price;
@@ -83,15 +82,16 @@
         roi = getENBDRate(salary, nationality);
       }
 
-      const monthlyROI = roi / 100 / 12;
-
-      let table = `<p>ROI: <strong>${roi.toFixed(2)}%</strong></p>`;
-      table += `<table><tr><th>Tenure (Months)</th><th>Total Interest</th><th>EMI (Monthly)</th></tr>`;
+      let table = `<p>ROI (Flat): <strong>${roi.toFixed(2)}%</strong></p>`;
+      table += `<table><tr><th>Tenure (Months)</th><th>Total Interest</th><th>Total Payable</th><th>EMI (Monthly)</th></tr>`;
 
       tenureMonths.forEach(months => {
-        const emi = (financeAmount * monthlyROI) / (1 - Math.pow(1 + monthlyROI, -months));
-        const totalInterest = emi * months - financeAmount;
-        table += `<tr><td>${months}</td><td>AED ${totalInterest.toFixed(2)}</td><td>AED ${emi.toFixed(2)}</td></tr>`;
+        const years = months / 12;
+        const totalInterest = financeAmount * (roi / 100) * years;
+        const totalPayable = financeAmount + totalInterest;
+        const emi = totalPayable / months;
+
+        table += `<tr><td>${months}</td><td>AED ${totalInterest.toFixed(2)}</td><td>AED ${totalPayable.toFixed(2)}</td><td>AED ${emi.toFixed(2)}</td></tr>`;
       });
 
       table += '</table>';
