@@ -39,6 +39,20 @@
       font-weight: 600;
       margin-top: 20px;
     }
+    #resultsTable {
+      margin-top: 30px;
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #resultsTable th, #resultsTable td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    #resultsTable th {
+      background-color: #005baa;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -96,10 +110,24 @@
   <label for="loanYears">Loan Period (Years):</label>
   <input type="number" id="loanYears" value="5" placeholder="e.g. 5" min="1" max="5" />
 
-  <p id="roi">ROI: </p>
-  <p id="emi">Monthly EMI: </p>
-  <p id="totalInterest">Total Interest: </p>
-  <p id="tenure">Tenure: </p>
+  <table id="resultsTable" class="hidden">
+    <thead>
+      <tr>
+        <th>ROI</th>
+        <th>Monthly EMI</th>
+        <th>Total Interest</th>
+        <th>Tenure</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td id="roiCell"></td>
+        <td id="emiCell"></td>
+        <td id="interestCell"></td>
+        <td id="tenureCell"></td>
+      </tr>
+    </tbody>
+  </table>
 
   <script>
     const bank = document.getElementById('bank');
@@ -110,14 +138,16 @@
     const downPaymentPercent = document.getElementById('downPaymentPercent');
     const downPaymentAmount = document.getElementById('downPaymentAmount');
     const loanYears = document.getElementById('loanYears');
-    const roiDisplay = document.getElementById('roi');
-    const emiDisplay = document.getElementById('emi');
-    const totalInterestDisplay = document.getElementById('totalInterest');
-    const tenureDisplay = document.getElementById('tenure');
     const goldenVisaGroup = document.getElementById('goldenVisaGroup');
     const goldenVisa = document.getElementById('goldenVisa');
     const bankingGroup = document.getElementById('bankingGroup');
     const bankingCustomer = document.getElementById('bankingCustomer');
+
+    const resultsTable = document.getElementById('resultsTable');
+    const roiCell = document.getElementById('roiCell');
+    const emiCell = document.getElementById('emiCell');
+    const interestCell = document.getElementById('interestCell');
+    const tenureCell = document.getElementById('tenureCell');
 
     function getRate() {
       const bankName = bank.value;
@@ -194,10 +224,12 @@
       const totalPayable = financeAmount + totalInterest;
       const emi = totalPayable / (years * 12);
 
-      roiDisplay.innerText = `ROI: ${rate.toFixed(2)}%`;
-      emiDisplay.innerText = `Monthly EMI: AED ${emi.toFixed(2)}`;
-      totalInterestDisplay.innerText = `Total Interest: AED ${totalInterest.toFixed(2)}`;
-      tenureDisplay.innerText = `Tenure: ${years} year(s)`;
+      roiCell.innerText = `${rate.toFixed(2)}%`;
+      emiCell.innerText = `AED ${emi.toFixed(2)}`;
+      interestCell.innerText = `AED ${totalInterest.toFixed(2)}`;
+      tenureCell.innerText = `${years} year(s)`;
+
+      resultsTable.classList.remove('hidden');
     }
 
     carPrice.addEventListener('input', updateDownPayments);
