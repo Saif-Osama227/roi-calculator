@@ -8,125 +8,188 @@
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      max-width: 800px;
+      max-width: 700px;
       margin: auto;
-      background-color: #f7f7f7;
     }
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .form-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    .form-row label {
-      flex: 1;
-      margin-right: 10px;
-    }
-    .form-row input, .form-row select {
-      flex: 2;
-      padding: 6px;
-    }
-    .section {
-      background: #fff;
-      padding: 15px 20px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.05);
+    label, select, input {
+      display: block;
+      margin-top: 10px;
     }
     .hidden {
       display: none;
-    }
-    .result {
-      font-size: 1.2em;
-      margin-top: 15px;
     }
   </style>
 </head>
 <body>
   <h1>Car Loan ROI Calculator</h1>
+  <label for="bank">Bank:</label>
+  <select id="bank">
+    <option>Emirates NBD</option>
+    <option>Dubai Islamic Bank</option>
+    <option>Sharjah Islamic Bank</option>
+    <option>Emirates Islamic Bank</option>
+    <option>Abu Dhabi Commercial Bank</option>
+    <option>Abu Dhabi Islamic Bank</option>
+  </select>
 
-  <div class="section">
-    <div class="form-row">
-      <label for="bank">Bank:</label>
-      <select id="bank">
-        <option>Emirates NBD</option>
-        <option>Dubai Islamic Bank</option>
-        <option>Sharjah Islamic Bank</option>
-        <option>Emirates Islamic Bank</option>
-        <option>Abu Dhabi Commercial Bank</option>
-        <option>Abu Dhabi Islamic Bank</option>
-      </select>
-    </div>
+  <label for="nationality">Nationality:</label>
+  <select id="nationality">
+    <option value="local">Local</option>
+    <option value="expat">Expat</option>
+  </select>
 
-    <div class="form-row">
-      <label for="nationality">Nationality:</label>
-      <select id="nationality">
-        <option value="local">Local</option>
-        <option value="expat">Expat</option>
-      </select>
-    </div>
+  <label for="salary">Monthly Salary (AED):</label>
+  <input type="number" id="salary" />
 
-    <div class="form-row">
-      <label for="salary">Monthly Salary (AED):</label>
-      <input type="number" id="salary" />
-    </div>
+  <label for="carOwner">Car Ownership:</label>
+  <select id="carOwner">
+    <option value="retail">Retail (Company-owned)</option>
+    <option value="managed">Managed (Individual-owned)</option>
+  </select>
 
-    <div class="form-row">
-      <label for="carOwner">Car Ownership:</label>
-      <select id="carOwner">
-        <option value="retail">Retail (Company-owned)</option>
-        <option value="managed">Managed (Individual-owned)</option>
-      </select>
-    </div>
-
-    <div id="goldenVisaGroup" class="form-row hidden">
-      <label for="goldenVisa">Golden Visa Holder?</label>
-      <select id="goldenVisa">
-        <option value="no">No</option>
-        <option value="yes">Yes</option>
-      </select>
-    </div>
-
-    <div id="bankingGroup" class="form-row hidden">
-      <label for="bankingCustomer">Banking Customer?</label>
-      <select id="bankingCustomer">
-        <option value="no">No</option>
-        <option value="yes">Yes</option>
-      </select>
-    </div>
+  <div id="goldenVisaGroup" class="hidden">
+    <label for="goldenVisa">Golden Visa Holder?</label>
+    <select id="goldenVisa">
+      <option value="no">No</option>
+      <option value="yes">Yes</option>
+    </select>
   </div>
 
-  <div class="section">
-    <div class="form-row">
-      <label for="carPrice">Car Price (AED):</label>
-      <input type="number" id="carPrice" />
-    </div>
-
-    <div class="form-row">
-      <label for="downPaymentPercent">Down Payment (%):</label>
-      <input type="number" id="downPaymentPercent" />
-    </div>
-
-    <div class="form-row">
-      <label for="downPaymentAmount">Down Payment Amount (AED):</label>
-      <input type="number" id="downPaymentAmount" />
-    </div>
-
-    <div class="form-row">
-      <label for="loanYears">Loan Period (Years):</label>
-      <input type="number" id="loanYears" value="5" />
-    </div>
+  <div id="bankingGroup" class="hidden">
+    <label for="bankingCustomer">Banking Customer?</label>
+    <select id="bankingCustomer">
+      <option value="no">No</option>
+      <option value="yes">Yes</option>
+    </select>
   </div>
 
-  <div class="section result">
-    <p id="roi">ROI: </p>
-    <p id="emi">Monthly EMI: </p>
-  </div>
+  <label for="carPrice">Car Price (AED):</label>
+  <input type="number" id="carPrice" />
 
-  <!-- Keep your JavaScript below unchanged -->
-  <!-- Your script tag here -->
+  <label for="downPaymentPercent">Down Payment (%):</label>
+  <input type="number" id="downPaymentPercent" />
+
+  <label for="downPaymentAmount">Down Payment Amount (AED):</label>
+  <input type="number" id="downPaymentAmount" />
+
+  <label for="loanYears">Loan Period (Years):</label>
+  <input type="number" id="loanYears" value="5" />
+
+  <p id="roi">ROI: </p>
+  <p id="emi">Monthly EMI: </p>
+
+  <script>
+    const bank = document.getElementById('bank');
+    const nationality = document.getElementById('nationality');
+    const salary = document.getElementById('salary');
+    const carOwner = document.getElementById('carOwner');
+    const carPrice = document.getElementById('carPrice');
+    const downPaymentPercent = document.getElementById('downPaymentPercent');
+    const downPaymentAmount = document.getElementById('downPaymentAmount');
+    const loanYears = document.getElementById('loanYears');
+    const roiDisplay = document.getElementById('roi');
+    const emiDisplay = document.getElementById('emi');
+    const goldenVisaGroup = document.getElementById('goldenVisaGroup');
+    const goldenVisa = document.getElementById('goldenVisa');
+    const bankingGroup = document.getElementById('bankingGroup');
+    const bankingCustomer = document.getElementById('bankingCustomer');
+
+    function getRate() {
+      const bankName = bank.value;
+      const nat = nationality.value;
+      const sal = parseFloat(salary.value);
+      const carOwnerVal = carOwner.value;
+      const goldenVisaVal = goldenVisa.value;
+      const bankingVal = bankingCustomer.value;
+      const carVal = parseFloat(carPrice.value);
+
+      if (bankName === 'Sharjah Islamic Bank') {
+        if (sal < 5000) return 0;
+        if (nat === 'local') {
+          return sal >= 5000 && sal <= 9999 ? 3.39 :
+                 sal <= 19999 ? 3.29 :
+                 sal <= 34999 ? 3.19 :
+                 sal <= 49999 ? 3.09 : 2.99;
+        } else {
+          return sal >= 5000 && sal <= 9999 ? 3.69 :
+                 sal <= 19999 ? 3.59 :
+                 sal <= 34999 ? 3.49 :
+                 sal <= 49999 ? 3.39 : 3.29;
+        }
+      }
+
+      if (bankName === 'Emirates Islamic Bank') {
+        if (nat === 'local' && sal >= 4000) {
+          return carVal >= 150000 ? 2.89 : 2.99;
+        } else if (nat === 'expat') {
+          return sal >= 10000 ? 3.19 : 3.49;
+        }
+      }
+
+      if (bankName === 'Abu Dhabi Commercial Bank') {
+        if (nat === 'local') {
+          return sal <= 7999 ? 4.35 :
+                 sal <= 11999 ? 3.84 :
+                 sal <= 19999 ? 3.10 :
+                 sal <= 39999 ? 2.99 : 2.99;
+        } else {
+          return sal <= 7999 ? 4.35 :
+                 sal <= 11999 ? 3.85 :
+                 sal <= 19999 ? 3.85 :
+                 sal <= 39999 ? 3.25 : 3.20;
+        }
+      }
+
+      return 0;
+    }
+
+    function updateDownPayments() {
+      const price = parseFloat(carPrice.value);
+      if (!price) return;
+      if (document.activeElement === downPaymentPercent) {
+        const percent = parseFloat(downPaymentPercent.value);
+        downPaymentAmount.value = (price * percent / 100).toFixed(2);
+      } else if (document.activeElement === downPaymentAmount) {
+        const amount = parseFloat(downPaymentAmount.value);
+        downPaymentPercent.value = ((amount / price) * 100).toFixed(2);
+      }
+      calculateEMI();
+    }
+
+    function calculateEMI() {
+      const price = parseFloat(carPrice.value);
+      const down = parseFloat(downPaymentAmount.value);
+      const years = parseInt(loanYears.value);
+      const rate = getRate();
+
+      if (!price || !down || !years || !rate) return;
+
+      const financeAmount = price - down;
+      const totalInterest = financeAmount * (rate / 100) * years;
+      const totalPayable = financeAmount + totalInterest;
+      const emi = totalPayable / (years * 12);
+
+      roiDisplay.innerText = `ROI: ${rate.toFixed(2)}%`;
+      emiDisplay.innerText = `Monthly EMI: AED ${emi.toFixed(2)}`;
+    }
+
+    carPrice.addEventListener('input', updateDownPayments);
+    downPaymentPercent.addEventListener('input', updateDownPayments);
+    downPaymentAmount.addEventListener('input', updateDownPayments);
+    loanYears.addEventListener('input', calculateEMI);
+    salary.addEventListener('input', calculateEMI);
+    nationality.addEventListener('change', () => {
+      goldenVisaGroup.classList.toggle('hidden', !(bank.value === 'Dubai Islamic Bank' && nationality.value === 'expat'));
+      calculateEMI();
+    });
+    carOwner.addEventListener('change', calculateEMI);
+    bank.addEventListener('change', () => {
+      goldenVisaGroup.classList.toggle('hidden', !(bank.value === 'Dubai Islamic Bank' && nationality.value === 'expat'));
+      bankingGroup.classList.toggle('hidden', bank.value !== 'Dubai Islamic Bank' && bank.value !== 'Sharjah Islamic Bank');
+      calculateEMI();
+    });
+    goldenVisa.addEventListener('change', calculateEMI);
+    bankingCustomer.addEventListener('change', calculateEMI);
+  </script>
 </body>
 </html>
