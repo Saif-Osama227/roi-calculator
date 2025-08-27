@@ -18,6 +18,13 @@
       margin-bottom: 30px;
       color: #005baa;
     }
+      .note {
+      font-size: 0.85rem;
+      color: #555;
+      margin-bottom: 20px;
+      text-align: center;
+      line-height: 1.4;
+    }
     label {
       margin-top: 15px;
       font-weight: 600;
@@ -51,7 +58,13 @@
 <body>
 
 <h1>Car Loan ROI Calculator</h1>
-
+<p class="note">
+  Minimum Salaries: ENBD & EIB: 4k banking / 6k non |  
+  DIB: 3k banking & non |  
+  ADCB: 5k banking & non |  
+  ADIB: 5k banking & non |  
+  SIB: 5k banking / 6k non
+</p>
 <label for="carPrice">Car Price (AED)</label>
 <input type="number" id="carPrice" placeholder="e.g. 100000" oninput="syncDownPayment()"/>
 
@@ -320,3 +333,4 @@ document.addEventListener('DOMContentLoaded', updateBankOptions);
 
 </body>
 </html>
+
