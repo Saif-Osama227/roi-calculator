@@ -18,7 +18,7 @@
       margin-bottom: 30px;
       color: #005baa;
     }
-      .note {
+    .note {
       font-size: 0.85rem;
       color: #555;
       margin-bottom: 20px;
@@ -65,6 +65,7 @@
   ADIB: 5k |  
   SIB: 5k banking / 6k non
 </p>
+
 <label for="carPrice">Car Price (AED)</label>
 <input type="number" id="carPrice" placeholder="e.g. 100000" oninput="syncDownPayment()"/>
 
@@ -127,33 +128,34 @@
 </table>
 
 <script>
+// --- Input Sync Logic ---
 function syncDownPayment() {
   updateDownPaymentFromPercent();
 }
 
 function updateDownPaymentFromPercent() {
-  const price = parseFloat(carPrice.value);
-  const percent = parseFloat(downPaymentPercent.value);
+  const price = parseFloat(document.getElementById("carPrice").value);
+  const percent = parseFloat(document.getElementById("downPaymentPercent").value);
   if (price && percent >= 0) {
-    downPaymentAmount.value = ((percent / 100) * price).toFixed(2);
+    document.getElementById("downPaymentAmount").value = ((percent / 100) * price).toFixed(2);
   }
   calculateEMIs();
 }
 
 function updatePercentFromDownPayment() {
-  const price = parseFloat(carPrice.value);
-  const amount = parseFloat(downPaymentAmount.value);
+  const price = parseFloat(document.getElementById("carPrice").value);
+  const amount = parseFloat(document.getElementById("downPaymentAmount").value);
   if (price && amount >= 0) {
-    downPaymentPercent.value = ((amount / price) * 100).toFixed(2);
+    document.getElementById("downPaymentPercent").value = ((amount / price) * 100).toFixed(2);
   }
   calculateEMIs();
 }
 
+// --- Bank Dropdown Logic ---
 function updateBankOptions() {
-  // Logic updated: We no longer restrict banks based on ownership.
-  // Both "Retail" (if it existed) and "Managed" now show all banks.
-  
   const bankSelect = document.getElementById('bank');
+  const ownership = document.getElementById('ownership').value;
+
   const allBanks = [
     { name: "Emirates NBD", value: "ENBD" },
     { name: "Dubai Islamic Bank", value: "DIB" },
@@ -162,9 +164,12 @@ function updateBankOptions() {
     { name: "Abu Dhabi Commercial Bank", value: "ADCB" }
   ];
 
-  // Simply allow all banks
+  // We now allow ALL banks for managed cars
   const allowedBanks = ["ENBD", "DIB", "SIB", "EIB", "ADCB"];
 
+  // Save current selection to restore if possible
+  const currentVal = bankSelect.value;
+  
   bankSelect.innerHTML = "";
   allBanks.forEach(bank => {
     if (allowedBanks.includes(bank.value)) {
@@ -175,6 +180,11 @@ function updateBankOptions() {
     }
   });
 
+  // Restore selection or default to first
+  if(allowedBanks.includes(currentVal)) {
+    bankSelect.value = currentVal;
+  }
+
   handleBankOptions();
   calculateEMIs();
 }
@@ -182,20 +192,33 @@ function updateBankOptions() {
 function handleBankOptions() {
   const selectedBank = document.getElementById("bank").value;
   const nationality = document.getElementById("nationality").value;
+  
+  // Logic for extra fields
   document.getElementById("goldenVisaContainer").style.display = (selectedBank === "DIB" && nationality === "expat") ? "block" : "none";
   document.getElementById("bankingCustomerContainer").style.display = (selectedBank === "DIB") ? "block" : "none";
+  
+  // Recalculate whenever bank-specific options change visibility
+  calculateEMIs();
 }
 
+// --- Rate Logic (Using your exact rates) ---
 function getRate() {
   const bank = document.getElementById("bank").value;
-  const salary = parseFloat(document.getElementById("salary").value);
+  // If salary is empty, treat as 0 to ensure comparisons work (prevents NaN errors)
+  const salary = parseFloat(document.getElementById("salary").value) || 0;
   const nationality = document.getElementById("nationality").value;
   const ownership = document.getElementById("ownership").value;
-  const goldenVisa = document.getElementById("goldenVisa")?.value || "no";
-  const banking = document.getElementById("bankingCustomer")?.value || "no";
-  const price = parseFloat(document.getElementById("carPrice").value);
+  
+  // Safely get optional values
+  const goldenVisaEl = document.getElementById("goldenVisa");
+  const goldenVisa = (goldenVisaEl && goldenVisaEl.offsetParent !== null) ? goldenVisaEl.value : "no";
 
-  // For now just a very basic demo logic per bank
+  const bankingEl = document.getElementById("bankingCustomer");
+  const banking = (bankingEl && bankingEl.offsetParent !== null) ? bankingEl.value : "no";
+
+  const price = parseFloat(document.getElementById("carPrice").value) || 0;
+
+  // 1. Emirates NBD
   if (bank === "ENBD") {
     if (nationality === "local") return 2.89;
     if (salary >= 50000) return 3.09;
@@ -204,8 +227,14 @@ function getRate() {
     if (salary >= 10000) return 3.89;
     return 4.09;
   }
+
+  // 2. Dubai Islamic Bank
   if (bank === "DIB") {
     const isLocalOrGolden = nationality === "local" || goldenVisa === "yes";
+    
+    // Note: Since you hid retail from the dropdown, ownership will usually be "managed".
+    // I kept the retail logic here just in case you re-enable it later, but simplified for now.
+    
     if (ownership === "retail") {
       if (isLocalOrGolden) {
         if (salary >= 35000) return 2.35;
@@ -215,6 +244,7 @@ function getRate() {
         if (salary >= 5000) return 3.50;
         return 5.25;
       } else {
+        // Expat Retail
         if (banking === "yes") {
           if (salary >= 35000) return 3.25;
           if (salary >= 25000) return 3.25;
@@ -232,7 +262,7 @@ function getRate() {
         }
       }
     } else {
-      // Managed Rates (Default)
+      // Managed (This is the active one)
       if (isLocalOrGolden) {
         if (salary >= 35000) return 2.50;
         if (salary >= 25000) return 2.65;
@@ -241,6 +271,7 @@ function getRate() {
         if (salary >= 5000) return 3.65;
         return 5.40;
       } else {
+        // Expat Managed
         if (banking === "yes") {
           if (salary >= 35000) return 3.40;
           if (salary >= 25000) return 3.40;
@@ -260,6 +291,7 @@ function getRate() {
     }
   }
 
+  // 3. Sharjah Islamic Bank
   if (bank === "SIB") {
     if (nationality === "local") {
       if (salary >= 50000) return 2.99;
@@ -276,6 +308,7 @@ function getRate() {
     }
   }
 
+  // 4. Emirates Islamic Bank
   if (bank === "EIB") {
     if (nationality === "local") {
       return (price >= 150000) ? 2.89 : 2.99;
@@ -284,6 +317,7 @@ function getRate() {
     }
   }
 
+  // 5. ADCB
   if (bank === "ADCB") {
     if (nationality === "local") {
       if (salary >= 40000) return 2.99;
@@ -300,35 +334,65 @@ function getRate() {
     }
   }
 
-  return 3.99; // fallback
+  return 3.99; // Final fallback
 }
 
+// --- Calculation Logic ---
 function calculateEMIs() {
-  const price = parseFloat(carPrice.value);
-  const down = parseFloat(downPaymentAmount.value);
-  const rate = getRate();
+  const priceVal = document.getElementById("carPrice").value;
+  const salaryVal = document.getElementById("salary").value;
+  const downVal = document.getElementById("downPaymentAmount").value;
+  
   const body = document.getElementById("resultsBody");
+  
+  // 1. Validation: Ensure Price and Salary are entered by the user
+  // We use the raw string values to check if they are empty
+  if (!priceVal || !salaryVal || !downVal) {
+    body.innerHTML = `
+      <tr><td>1 year</td><td>--</td><td>--</td><td>--</td></tr>
+      <tr><td>2 years</td><td>--</td><td>--</td><td>--</td></tr>
+      <tr><td>3 years</td><td>--</td><td>--</td><td>--</td></tr>
+      <tr><td>4 years</td><td>--</td><td>--</td><td>--</td></tr>
+      <tr><td>5 years</td><td>--</td><td>--</td><td>--</td></tr>
+    `;
+    return;
+  }
 
-  body.innerHTML = "";
+  const price = parseFloat(priceVal);
+  const down = parseFloat(downVal);
+  const rate = getRate();
+
+  body.innerHTML = ""; // Clear table for new results
 
   for (let years = 1; years <= 5; years++) {
-    if (!price || !down || !rate) {
-      body.innerHTML += `<tr><td>${years} year${years > 1 ? 's' : ''}</td><td>--</td><td>--</td><td>--</td></tr>`;
-      continue;
-    }
     const financeAmount = price - down;
     const totalInterest = financeAmount * (rate / 100) * years;
     const totalPayable = financeAmount + totalInterest;
     const emi = totalPayable / (years * 12);
-    body.innerHTML += `<tr><td>${years} year${years > 1 ? 's' : ''}</td><td>${rate.toFixed(2)}%</td><td>AED ${emi.toFixed(2)}</td><td>AED ${totalInterest.toFixed(2)}</td></tr>`;
+    
+    body.innerHTML += `
+      <tr>
+        <td>${years} year${years > 1 ? 's' : ''}</td>
+        <td>${rate.toFixed(2)}%</td>
+        <td>AED ${emi.toFixed(2)}</td>
+        <td>AED ${totalInterest.toFixed(2)}</td>
+      </tr>
+    `;
   }
 }
 
-document.querySelectorAll('input, select').forEach(el =>
-  el.addEventListener('input', calculateEMIs)
-);
+// --- Event Listeners ---
+// Attach listeners to all inputs to trigger recalc on change
+document.querySelectorAll('input, select').forEach(el => {
+  el.addEventListener('input', calculateEMIs);
+  el.addEventListener('change', calculateEMIs); // covers select dropdowns
+});
 
-document.addEventListener('DOMContentLoaded', updateBankOptions);
+// Initialize on Load
+document.addEventListener('DOMContentLoaded', () => {
+  updateBankOptions();
+  calculateEMIs(); // Will render dashes initially
+});
 </script>
 
 </body>
