@@ -18,7 +18,7 @@
       margin-bottom: 30px;
       color: #005baa;
     }
-    .note {
+      .note {
       font-size: 0.85rem;
       color: #555;
       margin-bottom: 20px;
@@ -65,7 +65,6 @@
   ADIB: 5k |  
   SIB: 5k banking / 6k non
 </p>
-
 <label for="carPrice">Car Price (AED)</label>
 <input type="number" id="carPrice" placeholder="e.g. 100000" oninput="syncDownPayment()"/>
 
@@ -84,14 +83,14 @@
   <option value="local">UAE National</option>
 </select>
 
-<!-- Car Ownership: Retail REMOVED -->
 <label for="ownership">Car Ownership</label>
-<select id="ownership">
-  <option value="managed" selected>Managed (Owned by individual)</option>
+<select id="ownership" onchange="updateBankOptions()">
+  <option value="managed">Managed (Owned by individual)</option>
 </select>
 
 <label for="bank">Financing Bank</label>
-<select id="bank" onchange="handleBankOptions()"></select>
+<select id="bank" onchange="handleBankOptions()">
+  </select>
 
 <div id="goldenVisaContainer" style="display:none;">
   <label for="goldenVisa">Golden Visa Holder?</label>
@@ -150,8 +149,10 @@ function updatePercentFromDownPayment() {
   calculateEMIs();
 }
 
-/* ✅ ALL banks always shown */
 function updateBankOptions() {
+  // Logic updated: We no longer restrict banks based on ownership.
+  // Both "Retail" (if it existed) and "Managed" now show all banks.
+  
   const bankSelect = document.getElementById('bank');
   const allBanks = [
     { name: "Emirates NBD", value: "ENBD" },
@@ -161,12 +162,17 @@ function updateBankOptions() {
     { name: "Abu Dhabi Commercial Bank", value: "ADCB" }
   ];
 
+  // Simply allow all banks
+  const allowedBanks = ["ENBD", "DIB", "SIB", "EIB", "ADCB"];
+
   bankSelect.innerHTML = "";
   allBanks.forEach(bank => {
-    const option = document.createElement("option");
-    option.value = bank.value;
-    option.textContent = bank.name;
-    bankSelect.appendChild(option);
+    if (allowedBanks.includes(bank.value)) {
+      const option = document.createElement("option");
+      option.value = bank.value;
+      option.textContent = bank.name;
+      bankSelect.appendChild(option);
+    }
   });
 
   handleBankOptions();
@@ -174,21 +180,127 @@ function updateBankOptions() {
 }
 
 function handleBankOptions() {
-  const selectedBank = bank.value;
+  const selectedBank = document.getElementById("bank").value;
   const nationality = document.getElementById("nationality").value;
-
-  goldenVisaContainer.style.display =
-    (selectedBank === "DIB" && nationality === "expat") ? "block" : "none";
-
-  bankingCustomerContainer.style.display =
-    (selectedBank === "DIB") ? "block" : "none";
+  document.getElementById("goldenVisaContainer").style.display = (selectedBank === "DIB" && nationality === "expat") ? "block" : "none";
+  document.getElementById("bankingCustomerContainer").style.display = (selectedBank === "DIB") ? "block" : "none";
 }
 
-/* 🔒 RATE LOGIC UNCHANGED */
 function getRate() {
-  /* existing logic exactly as you provided */
-  /* omitted here for brevity — unchanged */
-  return 3.99;
+  const bank = document.getElementById("bank").value;
+  const salary = parseFloat(document.getElementById("salary").value);
+  const nationality = document.getElementById("nationality").value;
+  const ownership = document.getElementById("ownership").value;
+  const goldenVisa = document.getElementById("goldenVisa")?.value || "no";
+  const banking = document.getElementById("bankingCustomer")?.value || "no";
+  const price = parseFloat(document.getElementById("carPrice").value);
+
+  // For now just a very basic demo logic per bank
+  if (bank === "ENBD") {
+    if (nationality === "local") return 2.89;
+    if (salary >= 50000) return 3.09;
+    if (salary >= 30000) return 3.39;
+    if (salary >= 15000) return 3.59;
+    if (salary >= 10000) return 3.89;
+    return 4.09;
+  }
+  if (bank === "DIB") {
+    const isLocalOrGolden = nationality === "local" || goldenVisa === "yes";
+    if (ownership === "retail") {
+      if (isLocalOrGolden) {
+        if (salary >= 35000) return 2.35;
+        if (salary >= 25000) return 2.50;
+        if (salary >= 15000) return 2.60;
+        if (salary >= 10000) return 3.25;
+        if (salary >= 5000) return 3.50;
+        return 5.25;
+      } else {
+        if (banking === "yes") {
+          if (salary >= 35000) return 3.25;
+          if (salary >= 25000) return 3.25;
+          if (salary >= 15000) return 4.00;
+          if (salary >= 10000) return 4.50;
+          if (salary >= 5000) return 5.00;
+          return 6.00;
+        } else {
+          if (salary >= 35000) return 3.25;
+          if (salary >= 25000) return 3.50;
+          if (salary >= 15000) return 4.15;
+          if (salary >= 10000) return 4.50;
+          if (salary >= 5000) return 5.00;
+          return 6.00;
+        }
+      }
+    } else {
+      // Managed Rates (Default)
+      if (isLocalOrGolden) {
+        if (salary >= 35000) return 2.50;
+        if (salary >= 25000) return 2.65;
+        if (salary >= 15000) return 2.75;
+        if (salary >= 10000) return 3.40;
+        if (salary >= 5000) return 3.65;
+        return 5.40;
+      } else {
+        if (banking === "yes") {
+          if (salary >= 35000) return 3.40;
+          if (salary >= 25000) return 3.40;
+          if (salary >= 15000) return 4.15;
+          if (salary >= 10000) return 4.65;
+          if (salary >= 5000) return 5.15;
+          return 6.15;
+        } else {
+          if (salary >= 35000) return 3.40;
+          if (salary >= 25000) return 3.65;
+          if (salary >= 15000) return 4.30;
+          if (salary >= 10000) return 4.65;
+          if (salary >= 5000) return 5.15;
+          return 6.15;
+        }
+      }
+    }
+  }
+
+  if (bank === "SIB") {
+    if (nationality === "local") {
+      if (salary >= 50000) return 2.99;
+      if (salary >= 35000) return 3.09;
+      if (salary >= 20000) return 3.19;
+      if (salary >= 10000) return 3.29;
+      return 3.39;
+    } else {
+      if (salary >= 50000) return 3.29;
+      if (salary >= 35000) return 3.39;
+      if (salary >= 20000) return 3.49;
+      if (salary >= 10000) return 3.59;
+      return 3.69;
+    }
+  }
+
+  if (bank === "EIB") {
+    if (nationality === "local") {
+      return (price >= 150000) ? 2.89 : 2.99;
+    } else {
+      return (salary >= 10000) ? 3.19 : 3.49;
+    }
+  }
+
+  if (bank === "ADCB") {
+    if (nationality === "local") {
+      if (salary >= 40000) return 2.99;
+      if (salary >= 20000) return 2.99;
+      if (salary >= 12000) return 3.10;
+      if (salary >= 8000) return 3.84;
+      return 4.35;
+    } else {
+      if (salary >= 40000) return 3.20;
+      if (salary >= 20000) return 3.25;
+      if (salary >= 12000) return 3.85;
+      if (salary >= 8000) return 3.85;
+      return 4.35;
+    }
+  }
+
+  return 3.99; // fallback
 }
 
 function calculateEMIs() {
@@ -206,15 +318,9 @@ function calculateEMIs() {
     }
     const financeAmount = price - down;
     const totalInterest = financeAmount * (rate / 100) * years;
-    const emi = (financeAmount + totalInterest) / (years * 12);
-
-    body.innerHTML += `
-      <tr>
-        <td>${years} year${years > 1 ? 's' : ''}</td>
-        <td>${rate.toFixed(2)}%</td>
-        <td>AED ${emi.toFixed(2)}</td>
-        <td>AED ${totalInterest.toFixed(2)}</td>
-      </tr>`;
+    const totalPayable = financeAmount + totalInterest;
+    const emi = totalPayable / (years * 12);
+    body.innerHTML += `<tr><td>${years} year${years > 1 ? 's' : ''}</td><td>${rate.toFixed(2)}%</td><td>AED ${emi.toFixed(2)}</td><td>AED ${totalInterest.toFixed(2)}</td></tr>`;
   }
 }
 
