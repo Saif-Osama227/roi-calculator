@@ -53,6 +53,11 @@
       background-color: #005baa;
       color: white;
     }
+    .error-msg {
+      color: #d9534f;
+      font-weight: bold;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -63,7 +68,8 @@
   DIB: 3k |  
   ADCB: 5k |  
   ADIB: 5k |  
-  SIB: 5k banking / 6k non
+  SIB: 5k banking / 6k non |
+  <strong>FAB: 20k</strong>
 </p>
 
 <label for="carPrice">Car Price (AED)</label>
@@ -155,7 +161,6 @@ function updatePercentFromDownPayment() {
 function updateBankOptions() {
   const bankSelect = document.getElementById('bank');
   
-  // Added FAB and ADIB
   const allBanks = [
     { name: "Emirates NBD", value: "ENBD" },
     { name: "Dubai Islamic Bank", value: "DIB" },
@@ -216,7 +221,6 @@ function getRate() {
   const bank = document.getElementById("bank").value;
   const salary = parseFloat(document.getElementById("salary").value) || 0;
   const nationality = document.getElementById("nationality").value;
-  const ownership = document.getElementById("ownership").value;
   const price = parseFloat(document.getElementById("carPrice").value) || 0;
   
   // Optional Inputs
@@ -239,7 +243,6 @@ function getRate() {
   // --- 2. Dubai Islamic Bank ---
   if (bank === "DIB") {
     const isLocalOrGolden = nationality === "local" || goldenVisa === "yes";
-    // Using Managed Rates
     if (isLocalOrGolden) {
       if (salary >= 35000) return 2.50;
       if (salary >= 25000) return 2.65;
@@ -268,10 +271,8 @@ function getRate() {
 
   // --- 3. First Abu Dhabi Bank (FAB) ---
   if (bank === "FAB") {
-    // Logic: Used Car Rates Only
-    
-    // Check Special High Value Condition (Applies to all)
-    // "if the car value is 200k or above and the salary is 25k or above"
+    // Note: The validation for < 20k is handled in calculateEMIs, 
+    // so we can assume salary >= 20k here if we reach this point.
     const isElite = (price >= 200000 && salary >= 25000);
 
     if (nationality === "local") {
@@ -279,48 +280,40 @@ function getRate() {
         if (isElite) return 2.15;
         if (salary >= 40000) return 2.15;
         if (salary >= 30000) return 2.29;
-        return 2.39; // 20k-29.9k
+        return 2.39;
       } else {
-        // Non-Banking Local
         if (isElite) return 2.74;
         if (salary >= 40000) return 2.74;
         if (salary >= 30000) return 2.81;
-        return 2.81; // 20k-29.9k
+        return 2.81;
       }
     } else {
-      // Expat
       if (banking === "yes") {
         if (isElite) return 2.59;
         if (salary >= 40000) return 2.59;
         if (salary >= 30000) return 2.59;
-        return 2.99; // 20k-29.9k
+        return 2.99;
       } else {
-        // Non-Banking Expat
         if (isElite) return 2.95;
         if (salary >= 40000) return 2.95;
         if (salary >= 30000) return 3.03;
-        return 3.03; // 20k-29.9k
+        return 3.03;
       }
     }
   }
 
   // --- 4. Abu Dhabi Islamic Bank (ADIB) ---
   if (bank === "ADIB") {
-    // Logic: Listed Company + Without Credit Card + Used Car (Standard Conservative Option)
-    // This corresponds to the 4th value in the slash-separated lists for Banking,
-    // and 4th value for Non-Banking.
-    
     if (banking === "yes") {
        if (salary >= 40000) return 2.69;
        if (salary >= 20000) return 2.79;
        if (salary >= 10000) return 3.89;
-       return 4.39; // 5k-9.99k
+       return 4.39;
     } else {
-       // Non-Banking
        if (salary >= 40000) return 3.19;
        if (salary >= 20000) return 3.29;
        if (salary >= 10000) return 4.39;
-       return 4.89; // 5k-9.99k
+       return 4.89;
     }
   }
 
@@ -367,7 +360,7 @@ function getRate() {
     }
   }
 
-  return 3.99; // Final fallback
+  return 3.99;
 }
 
 // --- Calculation Logic ---
@@ -375,9 +368,11 @@ function calculateEMIs() {
   const priceVal = document.getElementById("carPrice").value;
   const salaryVal = document.getElementById("salary").value;
   const downVal = document.getElementById("downPaymentAmount").value;
+  const bank = document.getElementById("bank").value;
   
   const body = document.getElementById("resultsBody");
   
+  // 1. Check for valid inputs
   if (!priceVal || !salaryVal || !downVal) {
     body.innerHTML = `
       <tr><td>1 year</td><td>--</td><td>--</td><td>--</td></tr>
@@ -390,9 +385,23 @@ function calculateEMIs() {
   }
 
   const price = parseFloat(priceVal);
+  const salary = parseFloat(salaryVal);
   const down = parseFloat(downVal);
-  const rate = getRate();
 
+  // 2. FAB Specific Validation: Salary must be >= 20,000
+  if (bank === "FAB" && salary < 20000) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="4" class="error-msg">
+          Minimum salary of AED 20,000 is required for FAB.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  // 3. Proceed with Calculation
+  const rate = getRate();
   body.innerHTML = "";
 
   for (let years = 1; years <= 5; years++) {
