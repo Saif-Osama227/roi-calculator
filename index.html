@@ -304,16 +304,18 @@ function getRate() {
 
   // --- 4. Abu Dhabi Islamic Bank (ADIB) ---
   if (bank === "ADIB") {
+    // Logic: Listed Company + WITH Credit Card + Used Car
     if (banking === "yes") {
-       if (salary >= 40000) return 2.69;
-       if (salary >= 20000) return 2.79;
-       if (salary >= 10000) return 3.89;
-       return 4.39;
+       if (salary >= 40000) return 2.59;
+       if (salary >= 20000) return 2.69;
+       if (salary >= 10000) return 3.79;
+       return 4.29; // 5k-9.99k
     } else {
-       if (salary >= 40000) return 3.19;
-       if (salary >= 20000) return 3.29;
-       if (salary >= 10000) return 4.39;
-       return 4.89;
+       // Non-Banking
+       if (salary >= 40000) return 3.09;
+       if (salary >= 20000) return 3.19;
+       if (salary >= 10000) return 4.29;
+       return 4.79; // 5k-9.99k
     }
   }
 
