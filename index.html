@@ -53,10 +53,12 @@
       background-color: #005baa;
       color: white;
     }
+    /* Style for the error message row */
     .error-msg {
       color: #d9534f;
       font-weight: bold;
       text-align: center;
+      background-color: #fdf0f0;
     }
   </style>
 </head>
@@ -223,7 +225,6 @@ function getRate() {
   const nationality = document.getElementById("nationality").value;
   const price = parseFloat(document.getElementById("carPrice").value) || 0;
   
-  // Optional Inputs
   const goldenVisaEl = document.getElementById("goldenVisa");
   const goldenVisa = (goldenVisaEl && goldenVisaEl.offsetParent !== null) ? goldenVisaEl.value : "no";
 
@@ -271,8 +272,6 @@ function getRate() {
 
   // --- 3. First Abu Dhabi Bank (FAB) ---
   if (bank === "FAB") {
-    // Note: The validation for < 20k is handled in calculateEMIs, 
-    // so we can assume salary >= 20k here if we reach this point.
     const isElite = (price >= 200000 && salary >= 25000);
 
     if (nationality === "local") {
@@ -371,8 +370,23 @@ function calculateEMIs() {
   const bank = document.getElementById("bank").value;
   
   const body = document.getElementById("resultsBody");
+
+  // --- PRIORITY 1: Validate FAB Salary immediately (if salary is entered) ---
+  if (salaryVal) {
+    const salaryCheck = parseFloat(salaryVal);
+    if (bank === "FAB" && salaryCheck < 20000) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="4" class="error-msg">
+            Minimum salary of AED 20,000 is required for FAB.
+          </td>
+        </tr>
+      `;
+      return; // Stop here, do not check for empty fields
+    }
+  }
   
-  // 1. Check for valid inputs
+  // --- PRIORITY 2: Check for missing fields (Show dashes) ---
   if (!priceVal || !salaryVal || !downVal) {
     body.innerHTML = `
       <tr><td>1 year</td><td>--</td><td>--</td><td>--</td></tr>
@@ -384,24 +398,11 @@ function calculateEMIs() {
     return;
   }
 
+  // --- PRIORITY 3: Perform Calculations ---
   const price = parseFloat(priceVal);
-  const salary = parseFloat(salaryVal);
   const down = parseFloat(downVal);
-
-  // 2. FAB Specific Validation: Salary must be >= 20,000
-  if (bank === "FAB" && salary < 20000) {
-    body.innerHTML = `
-      <tr>
-        <td colspan="4" class="error-msg">
-          Minimum salary of AED 20,000 is required for FAB.
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  // 3. Proceed with Calculation
   const rate = getRate();
+
   body.innerHTML = "";
 
   for (let years = 1; years <= 5; years++) {
