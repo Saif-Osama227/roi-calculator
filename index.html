@@ -23,7 +23,11 @@
       color: #555;
       margin-bottom: 20px;
       text-align: center;
-      line-height: 1.4;
+      line-height: 1.6;
+      background: #eef7ff;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #cce5ff;
     }
     label {
       margin-top: 15px;
@@ -65,14 +69,11 @@
 <body>
 
 <h1>Car Loan ROI Calculator</h1>
-<p class="note">
-  Minimum Salaries: ENBD & EIB: 4k banking / 6k non |  
-  DIB: 3k |  
-  ADCB: 5k |  
-  ADIB: 5k |  
-  SIB: 5k banking / 6k non |
-  <strong>FAB: 20k</strong>
-</p>
+<div class="note">
+  <strong>Minimum Salary Requirements:</strong><br>
+  ENBD & EIB: 4k (Banking) / 6k (Non-Banking)<br>
+  DIB: 3k | ADCB: 5k | ADIB: 5k | SIB: 5k | FAB: 20k
+</div>
 
 <label for="carPrice">Car Price (AED)</label>
 <input type="number" id="carPrice" placeholder="e.g. 100000" oninput="syncDownPayment()"/>
@@ -111,7 +112,7 @@
 
 <div id="bankingCustomerContainer" style="display:none;">
   <label id="bankingLabel" for="bankingCustomer">Banking with DIB?</label>
-  <select id="bankingCustomer">
+  <select id="bankingCustomer" onchange="calculateEMIs()">
     <option value="no">No</option>
     <option value="yes">Yes</option>
   </select>
@@ -201,16 +202,16 @@ function handleBankOptions() {
   // Golden Visa: Only for DIB Expat
   document.getElementById("goldenVisaContainer").style.display = (selectedBank === "DIB" && nationality === "expat") ? "block" : "none";
   
-  // Banking Customer: DIB, FAB, and ADIB
+  // Banking Customer Logic
+  // Show for: DIB, FAB, ADIB, ENBD, EIB
   const bankingContainer = document.getElementById("bankingCustomerContainer");
   const bankingLabel = document.getElementById("bankingLabel");
+  const banksWithBankingOption = ["DIB", "FAB", "ADIB", "ENBD", "EIB"];
   
-  if (["DIB", "FAB", "ADIB"].includes(selectedBank)) {
+  if (banksWithBankingOption.includes(selectedBank)) {
     bankingContainer.style.display = "block";
     // Dynamic Label
-    if (selectedBank === "FAB") bankingLabel.textContent = "Banking with FAB?";
-    else if (selectedBank === "ADIB") bankingLabel.textContent = "Banking with ADIB?";
-    else bankingLabel.textContent = "Banking with DIB?";
+    bankingLabel.textContent = `Banking with ${selectedBank}?`;
   } else {
     bankingContainer.style.display = "none";
   }
@@ -368,21 +369,49 @@ function calculateEMIs() {
   const salaryVal = document.getElementById("salary").value;
   const downVal = document.getElementById("downPaymentAmount").value;
   const bank = document.getElementById("bank").value;
-  
   const body = document.getElementById("resultsBody");
+  
+  // Banking status
+  const bankingEl = document.getElementById("bankingCustomer");
+  const banking = (bankingEl && bankingEl.offsetParent !== null) ? bankingEl.value : "no";
 
-  // --- PRIORITY 1: Validate FAB Salary immediately (if salary is entered) ---
+  // --- PRIORITY 1: Validate Salary Eligibility ---
   if (salaryVal) {
     const salaryCheck = parseFloat(salaryVal);
-    if (bank === "FAB" && salaryCheck < 20000) {
+    let minSalary = 0;
+    let errorMsg = "";
+
+    // Rule: FAB -> 20k
+    if (bank === "FAB") {
+      minSalary = 20000;
+      errorMsg = "Minimum salary of AED 20,000 is required for FAB.";
+    }
+    // Rule: ENBD & EIB -> 4k (Banking) / 6k (Non-Banking)
+    else if (bank === "ENBD" || bank === "EIB") {
+      minSalary = (banking === "yes") ? 4000 : 6000;
+      errorMsg = `Minimum salary of AED ${minSalary.toLocaleString()} is required for ${bank} (${banking === 'yes' ? 'Banking' : 'Non-Banking'}).`;
+    }
+    // Rule: DIB -> 3k
+    else if (bank === "DIB") {
+      minSalary = 3000;
+      errorMsg = "Minimum salary of AED 3,000 is required for DIB.";
+    }
+    // Rule: ADCB, ADIB, SIB -> 5k
+    else if (["ADCB", "ADIB", "SIB"].includes(bank)) {
+      minSalary = 5000;
+      errorMsg = `Minimum salary of AED 5,000 is required for ${bank}.`;
+    }
+
+    // Check Logic
+    if (salaryCheck < minSalary) {
       body.innerHTML = `
         <tr>
           <td colspan="4" class="error-msg">
-            Minimum salary of AED 20,000 is required for FAB.
+            ${errorMsg}
           </td>
         </tr>
       `;
-      return; // Stop here, do not check for empty fields
+      return;
     }
   }
   
